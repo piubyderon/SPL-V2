@@ -76,6 +76,41 @@
       form.reset();
     });
   </script>
+  <button onclick="downloadCSV()">Download CSV</button>
+
+<script>
+  const form = document.getElementById('lemburForm');
+  let dataList = [];
+
+  form.addEventListener('submit', function(e) {
+    e.preventDefault();
+    const data = {
+      nama: document.getElementById('nama').value,
+      tanggal: document.getElementById('tanggal').value,
+      jamMulai: document.getElementById('jamMulai').value,
+      jamSelesai: document.getElementById('jamSelesai').value
+    };
+    dataList.push(data);
+    alert("Data berhasil ditambahkan!");
+    form.reset();
+  });
+
+  function downloadCSV() {
+    let csv = "Nama,Tanggal,Jam Mulai,Jam Selesai\n";
+    dataList.forEach(row => {
+      csv += `${row.nama},${row.tanggal},${row.jamMulai},${row.jamSelesai}\n`;
+    });
+
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
+    link.setAttribute("href", URL.createObjectURL(blob));
+    link.setAttribute("download", "data_lembur.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
+</script>
+
 
 </body>
 </html>
