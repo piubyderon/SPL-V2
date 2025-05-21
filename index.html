@@ -1,38 +1,31 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="id">
 <head>
   <meta charset="UTF-8">
-  <title>Form Input Lembur</title>
+  <title>Form Lembur - CSV Lokal</title>
   <style>
     body {
       font-family: Arial, sans-serif;
       max-width: 500px;
-      margin: 40px auto;
+      margin: 30px auto;
       padding: 20px;
-      border: 1px solid #ddd;
+      border: 1px solid #ccc;
       border-radius: 10px;
-      box-shadow: 0 0 10px #ccc;
     }
-    input, select, button {
+    input, button {
       width: 100%;
       padding: 8px;
       margin: 8px 0;
-      box-sizing: border-box;
-    }
-    h2 {
-      text-align: center;
     }
   </style>
 </head>
 <body>
-
   <h2>Form Input Lembur</h2>
-
   <form id="lemburForm">
-    <label>Nama Karyawan:</label>
+    <label>Nama:</label>
     <input type="text" id="nama" required>
 
-    <label>Tanggal Lembur:</label>
+    <label>Tanggal:</label>
     <input type="date" id="tanggal" required>
 
     <label>Jam Mulai:</label>
@@ -41,76 +34,47 @@
     <label>Jam Selesai:</label>
     <input type="time" id="jamSelesai" required>
 
-    <button type="submit">Kirim</button>
+    <button type="submit">Tambah Data</button>
   </form>
 
-  <p id="statusMessage"></p>
+  <button onclick="downloadCSV()">Download CSV</button>
 
   <script>
     const form = document.getElementById('lemburForm');
-    const statusMessage = document.getElementById('statusMessage');
+    let dataList = [];
 
-    form.addEventListener('submit', function(event) {
-      event.preventDefault();
-
-      const nama = document.getElementById('nama').value;
-      const tanggal = document.getElementById('tanggal').value;
-      const jamMulai = document.getElementById('jamMulai').value;
-      const jamSelesai = document.getElementById('jamSelesai').value;
-
+    form.addEventListener('submit', function(e) {
+      e.preventDefault();
       const data = {
-        nama,
-        tanggal,
-        jamMulai,
-        jamSelesai
+        nama: document.getElementById('nama').value,
+        tanggal: document.getElementById('tanggal').value,
+        jamMulai: document.getElementById('jamMulai').value,
+        jamSelesai: document.getElementById('jamSelesai').value
       };
-
-      // Simpan sementara di console
-      console.log('Data lembur dikirim:', data);
-
-      // Tampilkan pesan sukses
-      statusMessage.textContent = "Data lembur berhasil dikirim!";
-      statusMessage.style.color = "green";
-
-      // Reset form
+      dataList.push(data);
+      alert("Data berhasil ditambahkan!");
       form.reset();
     });
+
+    function downloadCSV() {
+      if (dataList.length === 0) {
+        alert("Belum ada data untuk didownload.");
+        return;
+      }
+
+      let csv = "Nama,Tanggal,Jam Mulai,Jam Selesai\n";
+      dataList.forEach(row => {
+        csv += `${row.nama},${row.tanggal},${row.jamMulai},${row.jamSelesai}\n`;
+      });
+
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+      const link = document.createElement("a");
+      link.setAttribute("href", URL.createObjectURL(blob));
+      link.setAttribute("download", "data_lembur.csv");
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
   </script>
-  <button onclick="downloadCSV()">Download CSV</button>
-
-<script>
-  const form = document.getElementById('lemburForm');
-  let dataList = [];
-
-  form.addEventListener('submit', function(e) {
-    e.preventDefault();
-    const data = {
-      nama: document.getElementById('nama').value,
-      tanggal: document.getElementById('tanggal').value,
-      jamMulai: document.getElementById('jamMulai').value,
-      jamSelesai: document.getElementById('jamSelesai').value
-    };
-    dataList.push(data);
-    alert("Data berhasil ditambahkan!");
-    form.reset();
-  });
-
-  function downloadCSV() {
-    let csv = "Nama,Tanggal,Jam Mulai,Jam Selesai\n";
-    dataList.forEach(row => {
-      csv += `${row.nama},${row.tanggal},${row.jamMulai},${row.jamSelesai}\n`;
-    });
-
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-    const link = document.createElement("a");
-    link.setAttribute("href", URL.createObjectURL(blob));
-    link.setAttribute("download", "data_lembur.csv");
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  }
-</script>
-
-
 </body>
 </html>
