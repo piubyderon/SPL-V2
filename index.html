@@ -2,7 +2,8 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8">
-  <title>Form Lembur - CSV Lokal</title>
+  <title>Form Lembur Aice Ice Cream Jatim Industry</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -12,68 +13,130 @@
       border: 1px solid #ccc;
       border-radius: 10px;
     }
-    input, button {
+    input, select, button {
       width: 100%;
       padding: 8px;
       margin: 8px 0;
     }
+    h2 {
+      text-align: center;
+    }
+    h2 img {
+      vertical-align: middle;
+      height: 40px;
+      margin-right: 10px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+    table, th, td {
+      border: 1px solid #aaa;
+    }
+    th, td {
+      padding: 8px;
+      text-align: left;
+    }
   </style>
 </head>
 <body>
-  <h2>Form Input Lembur</h2>
-  <form id="lemburForm">
-    <label>Nama:</label>
-    <input type="text" id="nama" required>
+  <h2><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/27/Aice_logo.svg/512px-Aice_logo.svg.png" alt="Logo Aice">Form Input Lembur</h2>
 
+  <form id="lemburForm">
     <label>Tanggal:</label>
     <input type="date" id="tanggal" required>
 
-    <label>Jam Mulai:</label>
-    <input type="time" id="jamMulai" required>
+    <label>Nama:</label>
+    <select id="nama" required>
+      <option value="">-- Pilih Nama --</option>
+    </select>
 
-    <label>Jam Selesai:</label>
-    <input type="time" id="jamSelesai" required>
+    <label>Jam Pertama:</label>
+    <input type="text" id="jamPertama" required>
+
+    <label>Jam Kedua:</label>
+    <input type="text" id="jamKedua" required>
 
     <button type="submit">Tambah Data</button>
   </form>
 
-  <button onclick="downloadCSV()">Download CSV</button>
+  <button onclick="downloadExcel()">Download Excel</button>
+
+  <h3>Data Lembur:</h3>
+  <table id="dataTable">
+    <thead>
+      <tr>
+        <th>Tanggal</th>
+        <th>Nama</th>
+        <th>Jam Pertama</th>
+        <th>Jam Kedua</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
 
   <script>
     const form = document.getElementById('lemburForm');
-    let dataList = [];
+    const inputNama = document.getElementById('nama');
+    const inputTanggal = document.getElementById('tanggal');
+    let lemburData = [];
+    let lastTanggal = null;
+
+    // Ambil data nama dari Google Sheets
+    fetch('https://opensheet.elk.sh/2PACX-1vR6t_mYhvdQOLVmfltG-4g887RfyUunoTI_5TNq2Q5iaeFr5dhnf5Afg29_5e7XQFDdjiD_KIAe3t4K/Sheet1')
+      .then(response => response.json())
+      .then(data => {
+        data.forEach(row => {
+          const nama = row.Nama;
+          if (nama) {
+            const option = document.createElement('option');
+            option.value = nama;
+            option.textContent = nama;
+            inputNama.appendChild(option);
+          }
+        });
+      })
+      .catch(error => console.error('Gagal memuat nama dari Google Sheet:', error));
 
     form.addEventListener('submit', function(e) {
       e.preventDefault();
+
+      const tanggalValue = inputTanggal.value || lastTanggal || new Date().toISOString().split('T')[0];
+      lastTanggal = tanggalValue;
+
       const data = {
-        nama: document.getElementById('nama').value,
-        tanggal: document.getElementById('tanggal').value,
-        jamMulai: document.getElementById('jamMulai').value,
-        jamSelesai: document.getElementById('jamSelesai').value
+        tanggal: tanggalValue,
+        nama: inputNama.value,
+        jamPertama: document.getElementById('jamPertama').value,
+        jamKedua: document.getElementById('jamKedua').value
       };
-      dataList.push(data);
+
+      lemburData.push(data);
+
+      const table = document.getElementById('dataTable').querySelector('tbody');
+      const newRow = table.insertRow();
+      newRow.insertCell(0).textContent = data.tanggal;
+      newRow.insertCell(1).textContent = data.nama;
+      newRow.insertCell(2).textContent = data.jamPertama;
+      newRow.insertCell(3).textContent = data.jamKedua;
+
       alert("Data berhasil ditambahkan!");
       form.reset();
+      inputTanggal.value = lastTanggal;
+      inputNama.focus();
     });
 
-    function downloadCSV() {
-      if (dataList.length === 0) {
-        alert("Belum ada data untuk didownload.");
+    function downloadExcel() {
+      if (lemburData.length === 0) {
+        alert("Belum ada data yang dimasukkan.");
         return;
       }
 
-      let csv = "Nama,Tanggal,Jam Mulai,Jam Selesai\n";
-      dataList.forEach(row => {
-        csv += `${row.nama},${row.tanggal},${row.jamMulai},${row.jamSelesai}\n`;
-      });
-
-      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-      const link = document.createElement("a");
-      link.setAttribute("href", URL.createObjectURL(blob));
-      link.setAttribute("download", "data_lembur.csv");
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+      const worksheet = XLSX.utils.json_to_sheet(lemburData);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Data Lembur");
+      XLSX.writeFile(workbook, "data_lembur.xlsx");
     }
   </script>
 </body>
