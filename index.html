@@ -43,6 +43,9 @@
 <body>
   <h2><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/27/Aice_logo.svg/512px-Aice_logo.svg.png" alt="Logo Aice">Form Input Lembur</h2>
 
+  <label>Upload Daftar Nama (Excel):</label>
+  <input type="file" id="uploadExcel" accept=".xlsx, .xls">
+
   <form id="lemburForm">
     <label>Tanggal:</label>
     <input type="date" id="tanggal" required>
@@ -83,21 +86,34 @@
     let lemburData = [];
     let lastTanggal = null;
 
-    // Ambil data nama dari Google Sheets
-    fetch('https://opensheet.elk.sh/2PACX-1vR6t_mYhvdQOLVmfltG-4g887RfyUunoTI_5TNq2Q5iaeFr5dhnf5Afg29_5e7XQFDdjiD_KIAe3t4K/Sheet1')
-      .then(response => response.json())
-      .then(data => {
-        data.forEach(row => {
-          const nama = row.Nama;
-          if (nama) {
+    document.getElementById('uploadExcel').addEventListener('change', function(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const data = new Uint8Array(e.target.result);
+        const workbook = XLSX.read(data, { type: 'array' });
+        const sheetName = workbook.SheetNames[0];
+        const sheet = workbook.Sheets[sheetName];
+        const jsonData = XLSX.utils.sheet_to_json(sheet);
+
+        inputNama.innerHTML = '<option value="">-- Pilih Nama --</option>';
+
+        jsonData.forEach(row => {
+          if (row.Nama) {
             const option = document.createElement('option');
-            option.value = nama;
-            option.textContent = nama;
+            option.value = row.Nama;
+            option.textContent = row.Nama;
             inputNama.appendChild(option);
           }
         });
-      })
-      .catch(error => console.error('Gagal memuat nama dari Google Sheet:', error));
+
+        alert("Daftar nama berhasil dimuat dari Excel.");
+      };
+
+      reader.readAsArrayBuffer(file);
+    });
 
     form.addEventListener('submit', function(e) {
       e.preventDefault();
